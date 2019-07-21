@@ -5,7 +5,7 @@ Kurzbeschreibung
 ----------------
 
 Dieses Repository enthält eine Sammlung kleinerer Learning Apps, die zur
-Auflockerung einer Vorlesung unter Anleitung des Dozenten gemeinsam bearbeitet
+Auflockerung einer Vorlesung unter Anleitung der Lehrperson gemeinsam bearbeitet
 werden können. Auf diese Weise soll den Vorlesungen ein spielerischer Touch
 gegeben werden, ohne dabei vom Inhalt abzulenken. Die hier enthaltenen Apps
 sind alle ganz simple HTML/JavaScript-Programme, die relativ einfach an eigene

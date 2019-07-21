@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>JNDI und JMS</title>
+        <meta charset="utf-8">
+
+        <style>
+            body {
+                font-family: sans;
+                font-size: 12pt;
+
+                background-image: url(bg1.png);
+                background-size: cover;
+                background-repeat: no-repeat;
+            }
+
+            html, body {
+                min-height: 100%;
+            }
+
+            h1, h2, h3 {
+                color: #DF212F;
+                text-shadow: 2px 2px black;
+            }
+
+            table {
+                border-collapse: collapse;
+                background-color: #F0F0F0;
+                box-shadow: 0.28rem 0.28rem 0.5rem rgba(0,0,0,0.4);
+                margin-bottom: 1rem;
+
+                float: left;
+            }
+
+            td {
+                border: 1px solid black;
+                padding: 0.5em;
+            }
+
+            td.target {
+                min-width: 12em;
+            }
+
+            .source {
+                display: inline-block;
+
+                border: 1px solid black;
+                background-color: #F4F4C6;
+                padding: 0.25rem;
+
+                font-family: monospace;
+            }
+
+            .margin {
+                margin: 1rem;
+            }
+
+            td.dragenter {
+                background-color: #90EE90;
+            }
+        </style>
+
+        <script>
+            window.addEventListener("load", function() {
+                var descriptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+                var examples = [
+`jndi = new InitialContext();`,
+`// Nachrichten verschicken
+Message m1 = session.createTextMessage("Hallo du da!");
+queueProducer.send(m1);
+
+Message m2 = session.createTextMessage("Hallo Leute!");
+topicProducer.send(m2);`,
+`public class SenderProgram {
+    public static void main(String[] args) {`,
+`try {`,
+`ConnectionFactory connectionFactory = (ConnectionFactory)
+                  jndi.lookup("/ConnectionFactory");`,
+`}`,
+`import javax.jms.*;
+import javax.naming.*;`,
+`Session session = connection.createSession(
+    false, Session.AUTO_ACKNOWLEDGE);`,
+`InitialContext jndi = null;
+Connection connection = null;`,
+`// Zugriff auf eine Point-To-Point Warteschlange
+Queue exampleQueue = (Queue) jndi.lookup("/queue/ExampleQueue");
+MessageProducer exampleProducer = session.createProducer(exampleQueue);`,
+`} finally {
+    // Ressourcen freigeben
+    if (jndi != null) {
+        try { jndi.close(); }
+        catch (NamingException ex) { ex.printStackTrace(); }
+    }
+
+    if (connection != null) {
+        try { connection.close(); }
+        catch (JMSException ex) { ex.printStackTrace(); }
+    }
+}`,
+`}`,
+`connection = connectionFactory.createConnection();`,
+`} catch (JMSException ex) {
+    ex.printStackTrace();
+    System.err.println("JMS-FEHLER!");`,
+`// Zugriff auf eine themenorientierte Warteschlange
+Topic topic = (Topic) jndi.lookup("/topic/ExampleTopic");
+MessageProducer topicProducer = session.createProducer(topic);`,
+`} catch (NamingException ex) {
+    ex.printStackTrace();
+    System.err.println("JNDI-FEHLER!");`,
+                ];
+
+                var sound_nr = -1;
+                var max_sound_nr = 7;
+
+                var sound_random = 0;
+                var sound_finish = 1;
+                var sound_remove = 2;
+
+                function play_sound(sound) {
+                    if (sound === sound_finish) {
+                        var audio = new Audio("finish.ogg");
+                    } else if (sound === sound_remove) {
+                        var audio = new Audio("remove.ogg");
+                    } else {
+                        sound_nr += 1;
+                        if (sound_nr > max_sound_nr) sound_nr = 0;
+                        var audio = new Audio("" + sound_nr + ".ogg");
+                    }
+
+                    audio.play();
+                }
+
+                // Tabelle mit Fragen bauen
+                var table = document.createElement("table");
+                document.querySelector("body").appendChild(table);
+
+                for (var i = 0; i < descriptions.length; i++) {
+                    var text = descriptions[i];
+
+                    var tr = document.createElement("tr");
+                    table.appendChild(tr);
+
+                    var td = document.createElement("td");
+                    td.innerHTML = text;
+                    tr.appendChild(td);
+
+                    var td = document.createElement("td");
+                    td.classList.add("target");
+                    tr.appendChild(td);
+
+                    td.addEventListener("dragover", function(event) {
+                        this.classList.add("dragenter");
+
+                        event.preventDefault();
+                        event.stopPropagation();
+                    });
+
+                    td.addEventListener("dragleave", function(event) {
+                        this.classList.remove("dragenter");
+
+                        event.preventDefault();
+                        event.stopPropagation();
+                    });
+
+                    td.addEventListener("drop", function(event) {
+                        var element = document.getElementById(event.dataTransfer.getData("element"));
+                        element.parentNode.removeChild(element);
+                        this.appendChild(element);
+
+                        element.dataset.insideTable = "YES";
+                        element.classList.remove("margin");
+                        this.classList.remove("dragenter");
+
+                        if (document.querySelectorAll("body > .source").length > 0) {
+                            play_sound(sound_random);
+                        } else {
+                            play_sound(sound_finish);
+                        }
+
+                        event.preventDefault();
+                        event.stopPropagation();
+                    })
+                }
+
+                // Puzzlestücke wieder zurücklegen können
+                var body = document.querySelector("body");
+
+                body.addEventListener("dragover", function(event) {
+                    this.classList.add("dragenter");
+
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
+
+                body.addEventListener("dragleave", function(event) {
+                    this.classList.remove("dragenter");
+
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
+
+                body.addEventListener("drop", function(event) {
+                    var element = document.getElementById(event.dataTransfer.getData("element"));
+
+                    if (element.dataset.insideTable === "YES") {
+                        element.parentNode.removeChild(element);
+                        this.appendChild(element);
+                    }
+
+                    element.dataset.insideTable = "NO";
+                    element.classList.add("margin");
+                    this.classList.remove("dragenter");
+
+                    play_sound(sound_remove);
+
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
+
+                // Puzzlestücke bauen
+                for (var i = 0; i < examples.length; i++) {
+                    var text = examples[i];
+
+                    var div = document.createElement("pre");
+                    div.id = "example_" + i;
+                    div.classList.add("source");
+                    div.classList.add("margin");
+                    div.dataset.insideTable = "NO";
+                    div.innerHTML = text;
+                    div.setAttribute("draggable", true);
+
+                    div.addEventListener("dragstart", function(event) {
+                        event.dataTransfer.setData("element", this.id);
+                    })
+
+                    body.appendChild(div);
+                }
+            });
+        </script>
+    </head>
+    <body>
+        <h1>Asynchroner Versand von Nachrichten</h1>
+    </body>
+</html>

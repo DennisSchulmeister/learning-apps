@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>JSP-Syntax</title>
+        <meta charset="utf-8">
+
+        <style>
+            body {
+                font-family: sans;
+                font-size: 12pt;
+
+                background-image: url(bg1.png);
+                background-size: cover;
+                background-repeat: no-repeat;
+            }
+
+            html, body {
+                min-height: 100%;
+            }
+
+            h1, h2, h3 {
+                color: #DF212F;
+                text-shadow: 2px 2px black;
+            }
+
+            table {
+                border-collapse: collapse;
+                background-color: #F0F0F0;
+                box-shadow: 0.28rem 0.28rem 0.5rem rgba(0,0,0,0.4);
+                margin-bottom: 1rem;
+            }
+
+            td {
+                border: 1px solid black;
+                padding: 0.5em;
+            }
+
+            td.target {
+                min-width: 12em;
+            }
+
+            .source {
+                display: inline-block;
+
+                border: 1px solid black;
+                background-color: #F4F4C6;
+                padding: 0.25rem;
+
+                font-family: monospace;
+            }
+
+            .margin {
+                margin: 1rem;
+            }
+
+            .dragenter {
+                background-color: #90EE90;
+            }
+        </style>
+
+        <script>
+            window.addEventListener("load", function() {
+                var descriptions = [
+                    "Für Fallunterscheidungen und Schleifen",
+                    "Um Quellcode auszukommentieren",
+                    "Zur Definition des MIME-Types der Seite",
+                    "Um den Inhalt einer Variable auszugeben",
+                    "Um eine Methode in der Servletklasse anzulegen",
+                    "Für dein Import von Java-Klassen",
+                    "Um eine Methode ohne Rückgabewert aufzurufen",
+                    "Um das Ergebnis einer Methode anzuzeigen",
+                ];
+                var examples = [
+                    "<%-- … --%>",
+                    "<%= … %>",
+                    "<%@page … %>",
+                    "<% … %>",
+                    "<%= … %>",
+                    "<% … %>",
+                    "<%@page … %>",
+                    "<%! … %>",
+                ];
+
+                var sound_nr = -1;
+                var max_sound_nr = 7;
+
+                function play_sound(finish) {
+                    if (!finish) {
+                        sound_nr += 1;
+                        if (sound_nr > max_sound_nr) sound_nr = 0;
+                        var audio = new Audio("" + sound_nr + ".ogg");
+                    } else {
+                        var audio = new Audio("finish.ogg");
+                    }
+
+                    audio.play();
+                }
+
+                // Tabelle mit Fragen bauen
+                var table = document.createElement("table");
+                document.querySelector("body").appendChild(table);
+
+                for (var i = 0; i < descriptions.length; i++) {
+                    var text = descriptions[i];
+
+                    var tr = document.createElement("tr");
+                    table.appendChild(tr);
+
+                    var td = document.createElement("td");
+                    td.innerHTML = text;
+                    tr.appendChild(td);
+
+                    var td = document.createElement("td");
+                    td.classList.add("target");
+                    tr.appendChild(td);
+
+                    td.addEventListener("dragover", function(event) {
+                        this.classList.add("dragenter");
+                        event.preventDefault();
+                    });
+
+                    td.addEventListener("dragleave", function(event) {
+                        this.classList.remove("dragenter");
+                    });
+
+                    td.addEventListener("drop", function(event) {
+                        var element = document.getElementById(event.dataTransfer.getData("element"));
+                        element.parentNode.removeChild(element);
+                        this.appendChild(element);
+
+                        element.classList.remove("margin");
+                        this.classList.remove("dragenter");
+
+                        if (document.querySelectorAll("body > .source").length > 0) {
+                            play_sound(false);
+                        } else {
+                            play_sound(true);
+                        }
+                    })
+                }
+
+                // Puzzlestücke bauen
+                for (var i = 0; i < examples.length; i++) {
+                    var text = examples[i];
+
+                    var div = document.createElement("div");
+                    div.id = "example_" + i;
+                    div.classList.add("source");
+                    div.classList.add("margin");
+                    div.innerHTML = text;
+                    div.setAttribute("draggable", true);
+
+                    div.addEventListener("dragstart", function(event) {
+                        event.dataTransfer.setData("element", this.id);
+                    })
+
+                    document.querySelector("body").appendChild(div);
+                }
+            });
+        </script>
+    </head>
+    <body>
+        <h1>Welche Syntax wird wofür verwendet?</h1>
+    </body>
+</html>

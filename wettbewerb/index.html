@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Aufgaben</title>
+        <meta charset="utf-8">
+
+        <style>
+            html {
+                background-color: black;
+                background-image: url(img/bg.jpg);
+                background-size: cover;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+
+                font-family: sans;
+                font-size: 14pt;
+                color: #F7F7F7;
+            }
+
+            html, body, #parent {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #parent {
+                table-layout: fixed;
+            }
+
+            #parent td.col {
+                border: 0px dotted white;
+                border-right-width: 0.5rem;
+                padding: 0.5rem;
+                padding-top: 2rem;
+            }
+
+            #parent td.col:last-child {
+                border: 0;
+            }
+
+            td {
+                text-align: left;
+                vertical-align: top;
+            }
+
+            h1, h2, h3 {
+                margin: 0;
+                padding: 0;
+            }
+
+            .invisible {
+                transition: opacity 1s;
+                opacity: 0;
+                display: invisible;
+                z-index: -2;
+            }
+
+            .hidden {
+                display: none;
+            }
+
+            /**
+             * STEUERELEMENTE
+             */
+            button {
+                font-size: 120%;
+                font-weight: bold;
+                padding: 0.3rem;
+
+                bottom: 1rem;
+            }
+
+            button.new {
+                background-color: #ECC85E;
+                position: fixed;
+                left: 1rem;
+            }
+
+            button.new-group {
+                background-color: #90EE90;
+            }
+
+            button.finish {
+                background-color: #ADD8E6;
+            }
+
+            .buttons.right {
+                position: fixed;
+                right: 1rem;
+                bottom: 1rem;
+            }
+
+            /**
+             * DIALOG FÜR NEUE LÖSUNG
+             */
+            #new-solution {
+                position: absolute;
+                top: 5rem;
+                left: 5rem;
+                bottom: 5rem;
+                right: 5rem;
+                overflow: hidden;
+
+                background-color: #344D71;
+                border: 1px solid black;
+                box-shadow: 3px 3px 5px black;
+
+                padding: 1rem;
+
+                transition: opacity 1s;
+                opacity: 0;
+                display: invisible;
+                z-index: -5;
+            }
+
+            #new-solution.visible {
+                opacity: 1;
+                display: block;
+                z-index: 1;
+            }
+
+            #new-solution button {
+                position: absolute;
+            }
+
+            #new-solution .container {
+                margin-top: 1rem;
+                height: calc(100% - 5.5rem);
+                position: relative;
+            }
+
+            #new-solution .container .col1 {
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 66%;
+            }
+
+            #new-solution .container .col2 {
+                position: absolute;
+                top: 0;
+                left: 36%;
+                bottom: 0;
+                right: 0;
+            }
+
+            #new-solution .container .inner {
+                position: relative;
+                height: 100%;
+            }
+
+            #new-solution .container .col1 img {
+                width: 100%;
+            }
+
+            #new-solution .container .col2 select {
+                left: 0;
+                width: 100%;
+            }
+
+            #new-solution .container .col2 textarea {
+                top: 3.5rem;
+                left: 0;
+                width: 100%;
+                height: calc(100% - 4rem);
+            }
+
+            #new-solution button {
+                font-size: 100%;
+                padding: 0;
+                width: 7rem;
+            }
+
+            #new-solution button:last-child {
+                margin-left: 8rem
+            }
+
+            textarea {
+                font-size: 95%;
+                font-family: monospace;
+            }
+
+            /**
+             * ANZEIGE DER LÖSUNGEN
+             */
+            .solution {
+                max-width: 100%;
+                margin-top: 1rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .solution img {
+                width: 13vw;
+            }
+        </style>
+
+        <script>
+            window.addEventListener("load", function() {
+                // Bilder mit den Gesichtern
+                var faces = [];
+                var current_face = -1;
+
+                for (var i = 1; i < 25; i++) {
+                    var nr = "" + i;
+                    if (i < 10) nr = "0" + nr;
+                    faces.push("img/" + nr + ".jpg");
+                }
+
+                window.get_next_face = function() {
+                    current_face++;
+                    if (current_face >= faces.length) current_face = 0;
+                    return faces[current_face];
+                }
+
+                // Spielegruppen
+                window.groups = [];
+
+                window.solution_parent = document.getElementById("new-solution");
+                window.solution_image = document.getElementById("solution-img");
+                window.solution_group = document.getElementById("solution-group");
+                window.solution_text = document.getElementById("solution-text");
+
+            });
+
+            function add_group() {
+                var name = prompt("Wie soll die neue Gruppe heißen?");
+                if (name == null) return;
+                var name = name.trim();
+                if (name === "") return;
+
+                var group = {
+                    name: name,
+                    parent_div: document.createElement("td"),
+                    solutions: [],
+                }
+
+                group.parent_div.classList.add("col");
+                window.groups.push(group);
+
+                var parent = document.getElementById("parent");
+                parent.querySelector("tr").appendChild(group.parent_div);
+
+                var h2 = document.createElement("h2");
+                h2.innerHTML = group.name;
+                group.parent_div.appendChild(h2);
+
+                var option = document.createElement("option");
+                option.value = window.groups.length - 1;
+                option.text = group.name;
+                solution_group.add(option);
+            }
+
+            function new_solution() {
+                solution_image.src = get_next_face();
+                solution_group.value = "";
+                solution_text.value = "";
+                solution_parent.classList.add("visible");
+            }
+
+            function save_solution() {
+                // Eingabe prüfen
+                if (solution_group.value.trim() == "") {
+                    alert("Wählen Sie erst Ihre Gruppe aus!");
+                    return;
+                }
+
+                if (solution_text.value.trim() == "") {
+                    alert("Geben Sie erst Ihre Lösung ein!");
+                    return;
+                }
+
+                // Fenster ausblenden
+                solution_parent.classList.remove("visible");
+
+                // Lösung sichern
+                var group = groups[solution_group.value];
+                group.solutions.push({
+                    img: solution_image.src,
+                    text: solution_text.value,
+                });
+
+                // Lösung in der Spalte der Gruppe anzeigen
+                var show_div = document.createElement("div");
+                show_div.classList.add("solution");
+                group.parent_div.appendChild(show_div);
+
+                var table = document.createElement("table");
+                show_div.appendChild(table);
+
+                var tr = document.createElement("tr");
+                table.appendChild(tr);
+
+                var td = document.createElement("td");
+                tr.appendChild(td);
+
+                var img = document.createElement("img");
+                img.src = solution_image.src;
+                td.appendChild(img);
+
+                var td = document.createElement("td");
+                td.classList.add("invisible");
+                tr.appendChild(td);
+
+                var text = document.createElement("pre");
+                text.innerHTML = solution_text.value;
+                td.appendChild(text);
+            }
+
+            function cancel_solution() {
+                solution_parent.classList.remove("visible");
+            }
+
+            function finish_game() {
+                document.getElementById("btn-new").classList.add("hidden");
+                document.getElementById("btn-new-group").classList.add("hidden");
+                document.getElementById("btn-finish").classList.add("hidden");
+                document.getElementById("btn-return").classList.remove("hidden");
+
+                var new_headings = document.querySelectorAll("#parent .invisible");
+                for (var i = 0; i < new_headings.length; i++) {
+                    var h2 = new_headings[i];
+                    h2.classList.remove("invisible");
+                    h2.classList.add("visible");
+                }
+
+                var tds = document.querySelectorAll("#parent td.col");
+                for (var i = 1; i < tds.length; i++) {
+                    var td = tds[i];
+                    td.parentNode.removeChild(td);
+
+                    var new_tr = document.createElement("tr");
+                    new_tr.appendChild(td)
+                    document.getElementById("parent").appendChild(new_tr);
+                }
+            }
+
+            function return_to_game() {
+                document.getElementById("btn-new").classList.remove("hidden");
+                document.getElementById("btn-new-group").classList.remove("hidden");
+                document.getElementById("btn-finish").classList.remove("hidden");
+                document.getElementById("btn-return").classList.add("hidden");
+
+                var new_headings = document.querySelectorAll("#parent .visible");
+                for (var i = 0; i < new_headings.length; i++) {
+                    var h2 = new_headings[i];
+                    h2.classList.add("invisible");
+                    h2.classList.remove("visible");
+                }
+
+                var tds = document.querySelectorAll("#parent td.col");
+                var tr = document.querySelector("#parent tr:first-child");
+                for (var i = 1; i < tds.length; i++) {
+                    var td = tds[i];
+                    td.parentNode.parentNode.removeChild(td.parentNode);
+
+                    var td = tds[i];
+                    td.parentNode.removeChild(td);
+
+                    tr.appendChild(td)
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <!-- Anzeigetafel -->
+        <table id="parent">
+            <tr></tr>
+        </table>
+
+        <!-- Steuerelemente -->
+        <button id="btn-new" class="new" onclick="new_solution()">Neue Lösung</button>
+
+        <span class="buttons right">
+            <button id="btn-new-group" class="new-group" onclick="add_group()">Gruppe hinzufügen</button>
+            <button id="btn-finish" class="finish" onclick="finish_game()">Spiel beenden</button>
+            <button id="btn-return" class="finish hidden" onclick="return_to_game()">Zurück zum Spiel</button>
+        </span>
+
+        <!-- Popup für neue Lösung -->
+        <div id="new-solution">
+            <h3>Neue Lösung eingeben</h3>
+
+            <div class="container">
+                <div class="col1">
+                    <div class="inner">
+                        <img id="solution-img" src="">
+                    </div>
+                </div>
+                <div class="col2">
+                    <div class="inner">
+                        <label>Gruppe:</label>
+                        <select id="solution-group">
+                            <option value=""></option>
+                        </select>
+                        <textarea id="solution-text"class="col2"></textarea>
+                    </div>
+                </div>
+
+            </div>
+
+            <button class="okay" onclick="save_solution()">Okay</button>
+            <button class="cancel" onclick="cancel_solution()">Abbrechen</button>
+        </div>
+    </body>
+</html>
